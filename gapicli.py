@@ -277,6 +277,10 @@ class apimodule:
                 currentarg = cli
                 postdata[currentarg] = ''
                 continue
+            if cli in self.optional_arguments(currentfunction):
+                currentarg = cli
+                postdata[currentarg] = ''
+                continue
             if functionexists:
                 postdata[currentarg] = cli
 
