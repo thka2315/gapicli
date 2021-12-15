@@ -447,6 +447,8 @@ def main():
     else:
         print(api.apicall_post(remoteurl, data, json = True))
 
+    if os.path.exists(module.modulename + '.json'):
+        os.remove(module.modulename + '.json')
 
 if __name__ == '__main__':
     main()
