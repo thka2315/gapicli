@@ -282,7 +282,11 @@ class apimodule:
                 postdata[currentarg] = ''
                 continue
             if functionexists:
-                postdata[currentarg] = cli
+                if cli.startswith('{') or cli.startswith('['):
+                    userdict = json.loads(cli)
+                else:
+                    userdict = cli
+                postdata[currentarg] = userdict
 
         return postdata
 
@@ -331,15 +335,14 @@ class apimodules:
 
         return request.content.decode()
 
-    def apicall_post(self, function: str, body: Dict[str, Any], json: bool = False) -> str:
+    def apicall_post(self, function: str, body: Dict[str, Any], acceptjson: bool = False) -> str:
         url = urllib.parse.urljoin(self.apiserver, function)
         auth = requests.auth.HTTPBasicAuth(self.apiuser, self.apikey)
         if json:
             headers = {'Accept': 'application/json'}
         else:
             headers = {'Accept': 'application/xml'}
-        request = requests.post(url=url, timeout=(5, 14), auth=auth, data=body,
-                                headers=headers)
+        request = requests.post(url=url, timeout=(5, 14), auth=auth, json=body, headers=headers)
 
         return request.content.decode()
     def getapifunctions(self, functionname: str) -> apimodule:
@@ -445,7 +448,7 @@ def main():
     if data is None:
         print(api.apicall_get(remoteurl, json = True))
     else:
-        print(api.apicall_post(remoteurl, data, json = True))
+        print(api.apicall_post(remoteurl, data, acceptjson = True))
 
     if os.path.exists(module.modulename + '.json'):
         os.remove(module.modulename + '.json')

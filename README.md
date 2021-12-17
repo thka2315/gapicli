@@ -19,3 +19,13 @@ Show servers
     destroy              networkadapters      stop
     details              previewcloudconfig   templates
     xxxxxxx@https://api.glesys.com> server
+
+    user@localhost:~$ gapicli.py server list | jq .
+
+Create server
+
+    xxxxxxx@https://api.glesys.com> server create templatename debian-11 datacenter Falkenberg hostname testserver disksize 5 memorysize 512 cpucores 1 platform KVM users '[{"username":"cloud", "password":"password"}]'
+
+Delete server
+
+    xxxxxxx@https://api.glesys.com> server destroy serverid <serverid> keepip false
