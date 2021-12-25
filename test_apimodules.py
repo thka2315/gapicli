@@ -83,5 +83,5 @@ def test_apimodule():
 
 def test_apimodules():
     api = apimodules(apiserver, apiuser, apikey)
-    assert api.listfunctions() == ["account", "api", "archive", "country", "customer", "domain", "email", "filestorage", "invoice", "ip", "loadbalancer", "network", "networkadapter", "objectstorage", "paymentcard", "project", "server", "sshkey", "transaction", "user", "vpn"]
+    assert api.listmodules() == ["account", "api", "archive", "country", "customer", "domain", "email", "filestorage", "invoice", "ip", "loadbalancer", "network", "networkadapter", "objectstorage", "paymentcard", "project", "server", "sshkey", "transaction", "user", "vpn"]
     assert api.suboptions('sshkey', 'a') == ['add ']

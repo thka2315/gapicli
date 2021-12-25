@@ -323,10 +323,10 @@ class apimodules:
         self.apikey = apikey
         self.modulesjson = json.loads(self.apicall_get('api/listfunctions/'))
 
-    def apicall_get(self, function: str, json: bool = True) -> str:
+    def apicall_get(self, function: str, acceptjson: bool = True) -> str:
         url = urllib.parse.urljoin(self.apiserver, function)
         auth = requests.auth.HTTPBasicAuth(self.apiuser, self.apikey)
-        if json:
+        if acceptjson:
             headers = {'Accept': 'application/json'}
         else:
             headers = {'Accept': 'application/xml'}
@@ -335,52 +335,61 @@ class apimodules:
 
         return request.content.decode()
 
-    def apicall_post(self, function: str, body: Dict[str, Any], acceptjson: bool = False) -> str:
+    def apicall_post(self, function: str, body: Dict[str, Any],
+                     acceptjson: bool = False) -> str:
         url = urllib.parse.urljoin(self.apiserver, function)
         auth = requests.auth.HTTPBasicAuth(self.apiuser, self.apikey)
-        if json:
+        if acceptjson:
             headers = {'Accept': 'application/json'}
         else:
             headers = {'Accept': 'application/xml'}
-        request = requests.post(url=url, timeout=(5, 14), auth=auth, json=body, headers=headers)
+        request = requests.post(url=url, timeout=(5, 14), auth=auth,
+                                json=body, headers=headers)
 
         return request.content.decode()
-    def getapifunctions(self, functionname: str) -> apimodule:
+
+    def module(self, modulename: str) -> apimodule:
         """
-            HTTP GET to https://api.glesys.com/[functionname]/
+            HTTP GET to https://api.glesys.com/[modulename]/
 
             Arguments:
-                functionname which function to ask for
+                modulename which module to ask for
             Returns:
-                xml data for that function
+                xml data for that module
         """
         jsondata: str = str()
-        if os.path.exists(functionname + '.json'):
-            jsondata = self.readfile(functionname + '.json')
+        if os.path.exists(modulename + '.json'):
+            jsondata = self.readfile(modulename + '.json')
         else:
-            jsondata = self.apicall_get(functionname)
-            with open(functionname + '.json', 'w') as jsonfile:
+            jsondata = self.apicall_get(modulename)
+            with open(modulename + '.json', 'w') as jsonfile:
                 jsonfile.write(jsondata)
 
-        return apimodule(functionname, jsondata)
+        return apimodule(modulename, jsondata)
 
     def readfile(self, path: str) -> str:
         with open(path, 'r') as jsonfile:
             return jsonfile.read()
 
-    def listfunctions(self) -> List[str]:
-        return list(self.modulesjson['response']['modules'].keys())
+        return str()
 
-    def suboptions(self, currentfunction: str, text: str) -> List[str]:
-        if currentfunction in self.listfunctions():
-            current = self.getapifunctions(currentfunction)
+    def listmodules(self) -> List[str]:
+        modules = list(self.modulesjson['response']['modules'].keys())
+        # modules.append('help')
+
+        return modules
+
+    def suboptions(self, modulename: str, text: str) -> List[str]:
+        if modulename in self.listmodules():
+            current = self.module(modulename)
             subresult = [x + ' ' for x in current.functions() if x.startswith(text)]
             return subresult
+
         return current.functions()
 
-    def subrequired(self, currentfunction: str, suboption: str, text: str) -> List[str]:
-        if suboption in self.getapifunctions(currentfunction).functions():
-            current = self.getapifunctions(currentfunction)
+    def subrequired(self, modulename: str, suboption: str, text: str) -> List[str]:
+        if suboption in self.module(modulename).functions():
+            current = self.module(modulename)
             subresult = [x + ' ' for x in current.required_arguments(suboption) if x.startswith(text)]
             options = [x + ' ' for x in current.optional_arguments(suboption) if x.startswith(text)]
             return subresult + options
@@ -390,7 +399,7 @@ class apimodules:
     def complete(self, text: str, state: int) -> Union[str, None]:
         try:
             tokens = readline.get_line_buffer().split()
-            commands = self.listfunctions()
+            commands = self.listmodules()
             results = [x + ' ' for x in commands if x.startswith(text)] + [None]
             if len(tokens) > 0:
                 if len(tokens) == 1:
@@ -399,8 +408,8 @@ class apimodules:
                 if len(tokens) == 2:
                     if tokens[0] in commands:
                         results = self.suboptions(tokens[0], text) + [None]
-                    subfuncs = [x + ' ' for x in self.getapifunctions(tokens[0]).functions()]
-                    if tokens[1] in self.getapifunctions(tokens[0]).functions() and text == '':
+                    subfuncs = [x + ' ' for x in self.module(tokens[0]).functions()]
+                    if tokens[1] in self.module(tokens[0]).functions() and text == '':
                         results = self.subrequired(tokens[0], tokens[1], text) + [None]
                 if len(tokens) > 2:
                     results = self.subrequired(tokens[0], tokens[1], text) + [None]
@@ -435,14 +444,17 @@ def main():
     cmds = list()
     if args.commands == list():
         readline.set_completer(api.complete)
-        line = input("{}@{}> ".format(apiuser, apiserver))
-        cmds = shlex.split(line)
+        try:
+            line = input("{}@{}> ".format(apiuser, apiserver))
+            cmds = shlex.split(line)
+        except KeyboardInterrupt:
+            pass
     else:
         cmds = args.commands
 
     if not cmds:
         sys.exit(0)
-    module = api.getapifunctions(cmds[0])
+    module = api.module(cmds[0])
     del(cmds[0])
     remoteurl, data = module.requestdata(cmds)
     if data is None:
