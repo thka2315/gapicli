@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # G API command line interface
-# Copyright 2020 Thomas Karlsson
+# Copyright 2022 Thomas Karlsson
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
