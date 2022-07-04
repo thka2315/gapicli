@@ -1,3 +1,5 @@
+# This project has moved to https://gitlab.com/thka/
+
 # G API Command line interface
 This is an interactive shell for using API
 Just start it and use TAB for completion
